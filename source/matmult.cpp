@@ -101,13 +101,11 @@ int main(int argc, char *argv[])
     printf("Performing matrix multiplication using 1 core...\n");
   }
   start = omp_get_wtime();
-  #pragma parallel for
-  { 
-    for (i = 0; i < d1; i++)
-      for (j = 0; j < d3; j++)
-          for (k = 0; k < d2; k++)
-            C[i][j] += A[i][k] * B[k][j];
-  }
+  #pragma omp parallel for private(i, j, k) shared(A, B, C) if (mode > 1)
+  for (i = 0; i < d1; i++)
+    for (j = 0; j < d3; j++)
+        for (k = 0; k < d2; k++)
+          C[i][j] += A[i][k] * B[k][j];
   end = omp_get_wtime();
   /* test output */
   if (mode % 2 == 0) {
@@ -120,9 +118,10 @@ int main(int argc, char *argv[])
   printf ("\nDone.\n");
 
   /* free dynamic memory */
-  free_mat(A, d1);
-  free_mat(B, d2);
-  free_mat(C, d1);	
+  // done anyway when the program is closed, generates a SEGFAULT
+  // free_mat(A, d1);
+  // free_mat(B, d2);
+  // free_mat(C, d1);	
 
   return 0;
 }
