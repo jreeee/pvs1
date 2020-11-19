@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   if (argc < 4)
   {
       printf ("Matrix multiplication: C = A x B\n");
-      printf ("Usage: %s <NumRowA> <NumColA> <NumColB> |optional| <mode>\n", argv[0]); 
+      printf ("Usage: %s <NumRowA> <NumColA> <NumColB> [mode]\n", argv[0]); 
       return 0;
   }
 
@@ -94,34 +94,39 @@ int main(int argc, char *argv[])
   init_mat(B, d2, d3);
   C = alloc_mat(d1, d3);	// no initialisation of C, because it gets filled by matmult
 
-  /* serial version of matmult */
   if (mode > 1) {
-    printf("Performing matrix multiplication using %d cores...\n", omp_get_max_threads());
+    printf("PARALLEL\nPerforming matrix multiplication using %d cores...\n", omp_get_max_threads());
   } else {
-    printf("Performing matrix multiplication using 1 core...\n");
+    printf("SERIAL\nPerforming matrix multiplication using 1 core...\n");
   }
+
   start = omp_get_wtime();
+
+  //calculating the matrix, depending on the mode
+
   #pragma omp parallel for private(i, j, k) shared(A, B, C) if (mode > 1)
-  for (i = 0; i < d1; i++)
-    for (j = 0; j < d3; j++)
-        for (k = 0; k < d2; k++)
-          C[i][j] += A[i][k] * B[k][j];
+    for (i = 0; i < d1; i++)
+      for (j = 0; j < d3; j++)
+          for (k = 0; k < d2; k++)
+            C[i][j] += A[i][k] * B[k][j];
+
   end = omp_get_wtime();
-  /* test output */
+
   if (mode % 2 == 0) {
+    // test output, depending on the mode
     print_mat(A, d1, d2, "A"); 
     print_mat(B, d2, d3, "B"); 
     print_mat(C, d1, d3, "C");
   }
 
   printf("\nMatrix multiplication took %3.1f seconds\n", end - start);
-  printf ("\nDone.\n");
+  printf("\nDone.\n");
 
-  /* free dynamic memory */
-  // done anyway when the program is closed, generates a SEGFAULT
-  // free_mat(A, d1);
-  // free_mat(B, d2);
-  // free_mat(C, d1);	
+  /*  free dynamic memory 
+      done anyway when the program is closed, generates a SEGFAULT
+      free_mat(A, d1);
+      free_mat(B, d2);
+      free_mat(C, d1);  */
 
   return 0;
 }
